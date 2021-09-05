@@ -3,7 +3,7 @@ import numpy as np #numpy is for linear algebra
 import os #allows for portable operating system dependant functionality
 import cv2 #cv2 loads image of specified file and resize its pixel size
 import tensorflow as tf #neural network 
-from tensorflow.python import keras
+import tensorflow.keras.optimizers as optimizers
 from tqdm import tqdm #smart progress meter
 import matplotlib.pyplot as plt
 
@@ -118,10 +118,11 @@ def crossEntropy(yPredict, yTrue):
   #compute crossEntropy here
   return tf.reduce_mean(-tf.reduce_sum(yTrue * tf.math.log(yPredict)))
 
-optimizer = tf.keras.optimizers.SGD(learningRate)
+optimizer = optimizers.SGD(learningRate)
 
 #optimizes neural network by measuring its accuracy. This is done by matching the highest probability with the true case
 def runOptimization(x, y):
+  print("runOptimization")
   #wrap computation inside GradientTape
   with tf.GradientTape() as tape:
     predict = neuralNets(x)
@@ -130,11 +131,11 @@ def runOptimization(x, y):
   trainableVariables = list(weights.values()) + list(biases.values())
   gradients = tape.gradient(loss, trainableVariables)
   #zip is used to rezip gradients back into usable tuples
-  optimizer.apply_gradiants(zip(gradients, trainableVariables))
+  optimizer.apply_gradients(zip(gradients, trainableVariables))
 
 def accuracy(yPredict, yTrue):
   #predicted class is the index of the highest score
-  correctPrediction = tf.equal(tf.argmax(yPredict, 1), tf.cast(True, tf.int64))
+  correctPrediction = tf.equal(tf.argmax(yPredict, 1), tf.cast(yTrue, tf.int64))
   return tf.reduce_mean(tf.cast(correctPrediction, tf.float32), axis=-1)
 
 

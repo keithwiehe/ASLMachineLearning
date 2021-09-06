@@ -166,7 +166,7 @@ nImages = 28
 predictions = neuralNets(xTest)
 for i in range(nImages):
   modelPrediction = np.argmax(predictions.numpy()[i])
-  plt.imshow(np.reshape(xTest[i], [50, 50], cmap='gray_r'))
+  plt.imshow(np.reshape(xTest[i], [imgSize, imgSize]), cmap=plt.get_cmap('gray_r'))
   plt.show()
   print("Original Label: %s" % getKey(yTest[i]))
   print("Model prediction: %s" % getKey(modelPrediction))

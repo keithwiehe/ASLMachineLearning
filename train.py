@@ -21,17 +21,20 @@ labelMapSet = {'A':0,'B':1,'C': 2, 'D': 3, 'E':4,'F':5,'G':6, 'H': 7, 'I':8, 'J'
 def createTrainData():
   xTrain = []
   yTrain = []
+  count = 0
   for folder in os.listdir(trainDir):
     label = labelMapSet[folder]
     #iterate through every file in trainDir/folder(s) (e.g. src/debuggercafe/input/asl_alphabet_test/asl_alphabet_test.csv)
     for imageFile in tqdm(os.listdir(trainDir + folder)):
+      count = count + 1
       path = os.path.join(trainDir, folder, imageFile)
       #resizing each image and apply grayscale
       image = cv2.resize(cv2.imread(path, cv2.IMREAD_GRAYSCALE), (imgSize, imgSize))
       xTrain.append(np.array(image))
       yTrain.append(np.array(label))
-    print("createTrainData finished. Returning x and y now.")
-    return xTrain, yTrain
+  print("Number of training images processed: %i" %(count))
+  print("createTrainData finished. Returning x and y now.")
+  return xTrain, yTrain
 
 #createTestData() goes through test data and 
 def createTestData():
@@ -67,21 +70,22 @@ def displayImage(num):
   plt.show()
 
 
-# displayImage(1050)
+displayImage(1050)
+#%%
 
 #how much to change model in response to estimated error per update
-learningRate = .001 
+learningRate = 0.001 
 #number of epochs reminder:epochs is how many samples
 trainingSteps = 5000 
 #size of each iteration of training
-batch_size = 250 
+batchSize = 250 
 displayStep = 500
 #number of neurons in hidden layer
 nHidden = 300
 #create a tensorflow dataset with slices consisting of xTrain, yTrain together
 trainData = tf.data.Dataset.from_tensor_slices((xTrain, yTrain))
 #repeat dataset shuffle the batch of 87000, 250(batch_size) times. : This roughly allows for more thorough data
-trainData = trainData.repeat().shuffle(87000).batch(batch_size).prefetch(1)
+trainData = trainData.repeat().shuffle(87000).batch(batchSize).prefetch(1)
 
 
 #create the weights of each layer using the RandomNormal() API
@@ -105,7 +109,7 @@ def neuralNets(inputData):
 
   hiddenLayer2 = tf.add(tf.matmul(hiddenLayer1, weights['h2']), biases['b'])
   hiddenLayer2 = tf.nn.sigmoid(hiddenLayer2)
-
+  #TODO maybe hiddenLayer2?
   outputLayer = tf.add(tf.matmul(hiddenLayer1, weights['out']), biases['out'])
   #softmax of outputLayer returns probabilities for each label
   return tf.nn.softmax(outputLayer)
@@ -122,13 +126,13 @@ optimizer = optimizers.SGD(learningRate)
 
 #optimizes neural network by measuring its accuracy. This is done by matching the highest probability with the true case
 def runOptimization(x, y):
-  print("runOptimization")
   #wrap computation inside GradientTape
   with tf.GradientTape() as tape:
     predict = neuralNets(x)
     loss = crossEntropy(predict, y)
   #use to update variables
   trainableVariables = list(weights.values()) + list(biases.values())
+  #compute gradients
   gradients = tape.gradient(loss, trainableVariables)
   #zip is used to rezip gradients back into usable tuples
   optimizer.apply_gradients(zip(gradients, trainableVariables))
@@ -142,7 +146,6 @@ def accuracy(yPredict, yTrue):
 #runs the training of the neural network
 for step, (batchX, batchY) in enumerate(trainData.take(trainingSteps), 1):
   #optimize weights and bias values on batch
-
   runOptimization(batchX, batchY)
 
   #print step current loss and accuracy at correct displayStep interval
@@ -151,6 +154,21 @@ for step, (batchX, batchY) in enumerate(trainData.take(trainingSteps), 1):
     loss = crossEntropy(predict, batchY)
     acc = accuracy(predict, batchY)
     print("Training epoch: %i, Loss: %f, Accuracy: %f" %(step, loss, acc))
+prediction = neuralNets(xTest)
+print("Test Accuracy: %f" % accuracy(prediction, yTest))
 
+def getKey(val):
+  for key, value in labelMapSet.items():
+    if val == value:
+      return key
 
-# %%
+nImages = 28
+predictions = neuralNets(xTest)
+for i in range(nImages):
+  modelPrediction = np.argmax(predictions.numpy()[i])
+  plt.imshow(np.reshape(xTest[i], [50, 50], cmap='gray_r'))
+  plt.show()
+  print("Original Label: %s" % getKey(yTest[i]))
+  print("Model prediction: %s" % getKey(modelPrediction))
+
+#%%

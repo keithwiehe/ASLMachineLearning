@@ -1,0 +1,49 @@
+TEST 1
+------------------------------------------------------
+createTrainData finished. Returning x and y now.
+createTestData finished. Returning x and y test lists now.
+Training epoch: 500, Loss: 667.570801, Accuracy: 0.236000
+Training epoch: 1000, Loss: 544.437134, Accuracy: 0.380000
+Training epoch: 1500, Loss: 474.326385, Accuracy: 0.448000
+Training epoch: 2000, Loss: 397.897491, Accuracy: 0.544000
+Training epoch: 2500, Loss: 385.445557, Accuracy: 0.520000
+Training epoch: 3000, Loss: 350.559784, Accuracy: 0.584000
+Training epoch: 3500, Loss: 352.032013, Accuracy: 0.612000
+Training epoch: 4000, Loss: 273.431946, Accuracy: 0.728000
+Training epoch: 4500, Loss: 251.057892, Accuracy: 0.716000
+Training epoch: 5000, Loss: 241.654144, Accuracy: 0.700000
+-------------------------------------------------------------
+TEST 2
+-----------------------------------------------------------
+createTrainData finished. Returning x and y now.
+createTestData finished. Returning x and y test lists now.
+Training epoch: 500, Loss: 623.896729, Accuracy: 0.264000
+Training epoch: 1000, Loss: 603.867249, Accuracy: 0.304000
+Training epoch: 1500, Loss: 456.336060, Accuracy: 0.456000
+Training epoch: 2000, Loss: 429.239075, Accuracy: 0.484000
+Training epoch: 2500, Loss: 348.142426, Accuracy: 0.604000
+Training epoch: 3000, Loss: 337.113037, Accuracy: 0.592000
+Training epoch: 3500, Loss: 311.476990, Accuracy: 0.656000
+Training epoch: 4000, Loss: 253.033722, Accuracy: 0.688000
+Training epoch: 4500, Loss: 301.511108, Accuracy: 0.648000
+Training epoch: 5000, Loss: 278.911194, Accuracy: 0.628000
+Test Accuracy: 0.750000
+--------------------------------------------------------
+TEST 3
+----------------------------------------------------------
+Number of training images processed: 87000
+createTrainData finished. Returning x and y now.
+createTestData finished. Returning x and y test lists now.
+Training epoch: 500, Loss: 644.354736, Accuracy: 0.276000
+Training epoch: 1000, Loss: 577.300049, Accuracy: 0.320000
+Training epoch: 1500, Loss: 469.314545, Accuracy: 0.440000
+Training epoch: 2000, Loss: 401.179840, Accuracy: 0.560000
+Training epoch: 2500, Loss: 388.083130, Accuracy: 0.560000
+Training epoch: 3000, Loss: 302.053131, Accuracy: 0.668000
+Training epoch: 3500, Loss: 319.032501, Accuracy: 0.632000
+Training epoch: 4000, Loss: 305.329224, Accuracy: 0.640000
+Training epoch: 4500, Loss: 270.316132, Accuracy: 0.696000
+Training epoch: 5000, Loss: 214.054276, Accuracy: 0.744000
+Test Accuracy: 0.892857
+--------------------------------------------------------------
+TEST 4

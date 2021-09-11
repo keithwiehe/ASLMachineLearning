@@ -1,4 +1,5 @@
 #%%
+import pandas as pd
 import numpy as np #numpy is for linear algebra
 import os #allows for portable operating system dependant functionality
 import cv2 #cv2 loads image of specified file and resize its pixel size
@@ -12,10 +13,11 @@ trainDir = "src/asl_alphabet_train/"
 testDir = "src/asl_alphabet_test/"
 #reduce image to size 50x50 pixels: This leaves 2500 points to use as features.
 imgSize = 50
-#label_map is how we will label different ASL signs. In this case we are doing th alphabet so 29 elements
 labelMapSet = {'A':0,'B':1,'C': 2, 'D': 3, 'E':4,'F':5,'G':6, 'H': 7, 'I':8, 'J':9,'K':10,'L':11, 'M': 12, 'N': 13, 'O':14, 
                 'P':15,'Q':16, 'R': 17, 'S': 18, 'T':19, 'U':20,'V':21, 'W': 22, 'X': 23, 'Y':24, 'Z':25, 
                 'del': 26, 'nothing': 27,'space':28}
+features = imgSize * imgSize
+classLabelSize = 29
 
 #createTrainData() goes through training data and resizes the images and converts them to grayscale
 def createTrainData():
@@ -23,6 +25,7 @@ def createTrainData():
   yTrain = []
   count = 0
   for folder in os.listdir(trainDir):
+    print(folder)
     label = labelMapSet[folder]
     #iterate through every file in trainDir/folder(s) (e.g. src/debuggercafe/input/asl_alphabet_test/asl_alphabet_test.csv)
     for imageFile in tqdm(os.listdir(trainDir + folder)):
@@ -36,7 +39,7 @@ def createTrainData():
   print("createTrainData finished. Returning x and y now.")
   return xTrain, yTrain
 
-#createTestData() goes through test data and 
+#createTestData() goes through test data and resizes the images and converts them to grayscale
 def createTestData():
   xTest = []
   yTest = []
@@ -53,9 +56,6 @@ def createTestData():
 xTrain, yTrain = createTrainData()
 xTest, yTest = createTestData()
 
-features = imgSize * imgSize
-classLabelSize = 29
-
 #set as np array then reshape then divide
 xTrain, xTest = np.array(xTrain, np.float32), np.array(xTest, np.float32)
 xTrain, xTest = xTrain.reshape([-1, features]), xTest.reshape([-1, features])
@@ -70,13 +70,13 @@ def displayImage(num):
   plt.show()
 
 
-displayImage(1050)
+# displayImage(1050)
 #%%
 
 #how much to change model in response to estimated error per update
 learningRate = 0.001 
 #number of epochs reminder:epochs is how many samples
-trainingSteps = 5000 
+trainingSteps = 8000 
 #size of each iteration of training
 batchSize = 250 
 displayStep = 500
@@ -109,24 +109,22 @@ def neuralNets(inputData):
 
   hiddenLayer2 = tf.add(tf.matmul(hiddenLayer1, weights['h2']), biases['b'])
   hiddenLayer2 = tf.nn.sigmoid(hiddenLayer2)
-  #TODO maybe hiddenLayer2?
   outputLayer = tf.add(tf.matmul(hiddenLayer1, weights['out']), biases['out'])
   #softmax of outputLayer returns probabilities for each label
   return tf.nn.softmax(outputLayer)
 
-#loss function crossEntropy is a lograthamic scale to penalize incorrect classifications more than close classifications
+#(ie compute_loss)loss function crossEntropy is a lograthamic scale to penalize incorrect classifications more than close classifications
 def crossEntropy(yPredict, yTrue):
   yTrue = tf.one_hot(yTrue, depth=classLabelSize)
   #avoid log(0)
-  yPredict = tf.clip_by_value(yPredict, 1e-9, 1.)
+  yPredict = tf.clip_by_value(yPredict, 1e-9, 1.0)
   #compute crossEntropy here
   return tf.reduce_mean(-tf.reduce_sum(yTrue * tf.math.log(yPredict)))
 
-optimizer = optimizers.SGD(learningRate)
+optimizer = optimizers.Adam(learningRate)
 
 #optimizes neural network by measuring its accuracy. This is done by matching the highest probability with the true case
-def runOptimization(x, y):
-  #wrap computation inside GradientTape
+def computeGradients(x, y):
   with tf.GradientTape() as tape:
     predict = neuralNets(x)
     loss = crossEntropy(predict, y)
@@ -135,7 +133,12 @@ def runOptimization(x, y):
   #compute gradients
   gradients = tape.gradient(loss, trainableVariables)
   #zip is used to rezip gradients back into usable tuples
-  optimizer.apply_gradients(zip(gradients, trainableVariables))
+  # optimizer.minimize(gradients, trainableVariables)
+  optimizer.apply_gradients(
+    (grad, var) 
+    for (grad, var) in zip(gradients,trainableVariables) 
+    if grad is not None
+)
 
 def accuracy(yPredict, yTrue):
   #predicted class is the index of the highest score
@@ -146,7 +149,7 @@ def accuracy(yPredict, yTrue):
 #runs the training of the neural network
 for step, (batchX, batchY) in enumerate(trainData.take(trainingSteps), 1):
   #optimize weights and bias values on batch
-  runOptimization(batchX, batchY)
+  computeGradients(batchX, batchY)
 
   #print step current loss and accuracy at correct displayStep interval
   if step % displayStep == 0:
@@ -154,21 +157,21 @@ for step, (batchX, batchY) in enumerate(trainData.take(trainingSteps), 1):
     loss = crossEntropy(predict, batchY)
     acc = accuracy(predict, batchY)
     print("Training epoch: %i, Loss: %f, Accuracy: %f" %(step, loss, acc))
-prediction = neuralNets(xTest)
-print("Test Accuracy: %f" % accuracy(prediction, yTest))
+model = neuralNets(xTest)
+print("Test Accuracy: %f" % accuracy(model, yTest))
 
-def getKey(val):
-  for key, value in labelMapSet.items():
-    if val == value:
-      return key
+# def getKey(val):
+#   for key, value in labelMapSet.items():
+#     if val == value:
+#       return key
 
-nImages = 28
-predictions = neuralNets(xTest)
-for i in range(nImages):
-  modelPrediction = np.argmax(predictions.numpy()[i])
-  plt.imshow(np.reshape(xTest[i], [imgSize, imgSize]), cmap=plt.get_cmap('gray_r'))
-  plt.show()
-  print("Original Label: %s" % getKey(yTest[i]))
-  print("Model prediction: %s" % getKey(modelPrediction))
+# nImages = 28
+# predictions = neuralNets(xTest)
+# for i in range(nImages):
+#   modelPrediction = np.argmax(predictions.numpy()[i])
+#   plt.imshow(np.reshape(xTest[i], [imgSize, imgSize]), cmap=plt.get_cmap('gray_r'))
+#   plt.show()
+#   print("Original Label: %s" % getKey(yTest[i]))
+#   print("Model prediction: %s" % getKey(modelPrediction))
 
 #%%
